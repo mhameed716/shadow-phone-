@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.ShadowPhone" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#090E11</item>
+        <item name="android:navigationBarColor">#090E11</item>
+        <item name="android:windowBackground">#090E11</item>
+        <item name="android:colorAccent">#B9F36A</item>
+    </style>
+</resources>
