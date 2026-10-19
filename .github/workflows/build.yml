@@ -35,16 +35,24 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./gradlew --no-daemon --stacktrace assembleDebug > "$RUNNER_TEMP/gradle-build.log" 2>&1
+          ./gradlew --no-daemon --console=plain --stacktrace assembleDebug > "$RUNNER_TEMP/gradle-build.log" 2>&1
           result=$?
           if [ "$result" -ne 0 ]; then
-            echo '### Gradle build failure (last 60 lines)' >> "$GITHUB_STEP_SUMMARY"
-            echo '```text' >> "$GITHUB_STEP_SUMMARY"
-            tail -n 60 "$RUNNER_TEMP/gradle-build.log" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            diagnostics=$(grep -nE '(^e: |^w: |^FAILURE:|^\* What went wrong:|^Execution failed|^> Task .* FAILED|^Caused by:|error:|Error:)' "$RUNNER_TEMP/gradle-build.log" | head -n 40 || true)
+            if [ -z "$diagnostics" ]; then diagnostics=$(tail -n 40 "$RUNNER_TEMP/gradle-build.log"); fi
+            {
+              echo '### Gradle failure diagnostics'
+              echo '```text'
+              printf '%s\n' "$diagnostics"
+              echo '```'
+              echo '### Gradle build log tail'
+              echo '```text'
+              tail -n 40 "$RUNNER_TEMP/gradle-build.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
             while IFS= read -r line; do
-              echo "::error title=Gradle build::$line"
-            done < <(tail -n 30 "$RUNNER_TEMP/gradle-build.log")
+              echo "::error title=Gradle diagnostic::$line"
+            done <<< "$diagnostics"
           fi
           exit "$result"
 
