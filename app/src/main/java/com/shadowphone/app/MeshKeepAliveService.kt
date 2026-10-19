@@ -21,11 +21,13 @@ internal class MeshKeepAliveService : Service() {
     companion object {
         private const val CHANNEL_ID = "shadow_phone_mesh"
         private const val NOTIFICATION_ID = 45871
+        private const val ACTION_START = "com.shadowphone.app.action.START_MESH"
+        private const val ACTION_STOP = "com.shadowphone.app.action.STOP_MESH"
 
         fun start(context: Context): Boolean = try {
             ContextCompat.startForegroundService(
                 context.applicationContext,
-                Intent(context, MeshKeepAliveService::class.java).setAction("com.shadowphone.app.action.START_MESH")
+                Intent(context, MeshKeepAliveService::class.java).setAction(ACTION_START)
             )
             true
         } catch (_: Exception) {
@@ -55,11 +57,25 @@ internal class MeshKeepAliveService : Service() {
         }
     }
 
+    @Suppress("DEPRECATION")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE)
+            else stopForeground(true)
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
+
         val openApp = PendingIntent.getActivity(
             this,
             0,
             Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val stopService = PendingIntent.getService(
+            this,
+            1,
+            Intent(this, MeshKeepAliveService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -69,6 +85,13 @@ internal class MeshKeepAliveService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(true)
             .setContentIntent(openApp)
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_menu_close_clear_cancel,
+                    "إيقاف",
+                    stopService
+                ).build()
+            )
             .build()
 
         try {

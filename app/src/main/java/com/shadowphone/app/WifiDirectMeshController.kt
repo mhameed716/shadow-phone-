@@ -10,7 +10,6 @@ import android.net.wifi.p2p.WifiP2pInfo
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Looper
-import android.net.wps.WpsInfo
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -139,7 +138,6 @@ internal class WifiDirectMeshController(context: Context) {
         if (device == null) { setStatus("لم يعد الجهاز متاحاً؛ حدّث البحث"); return }
         val config = WifiP2pConfig().apply {
             deviceAddress = device.deviceAddress
-            wps.setup = WpsInfo.PBC
             groupOwnerIntent = 0
         }
         try {
